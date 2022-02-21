@@ -105,5 +105,15 @@ public class ShadowInstrumentation extends Instrumentation {
     public void callActivityOnCreate(ShadowActivity activity, Bundle icicle, PersistableBundle persistentState) {
     }
 
+    public void callActivityOnStart(ShadowActivity activity) {
+    }
 
+    public void callActivityOnResume(ShadowActivity activity) {
+    }
+
+    public void callActivityOnPause(ShadowActivity activity) {
+    }
+
+    public void callActivityOnStop(ShadowActivity activity) {
+    }
 }
