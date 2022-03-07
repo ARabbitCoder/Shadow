@@ -84,10 +84,12 @@ class PluginClassLoader(
                 return loaderClassLoader.loadClass(className)
             }
 
-            //包名在白名单中的类按双亲委派逻辑，从宿主中加载
-            if (className.inPackage(allHostWhiteTrie)) {
+
+            //非插件中的代码，一律从宿主中加载
+            if (!className.inPackage(allHostWhiteTrie)) {
                 return super.loadClass(className, resolve)
             }
+
 
             var suppressed: ClassNotFoundException? = null
             try {
