@@ -18,15 +18,22 @@
 
 package com.tencent.shadow.core.transform.specific
 
-class ActivityTransform : SimpleFilterRenameTransform(
-    mapOf(
-        "android.app.Activity"
-                to "com.tencent.shadow.core.runtime.ShadowActivity",
-        "android.app.NativeActivity"
-                to "com.tencent.shadow.core.runtime.ShadowNativeActivity"
-    ), arrayListOf<String>(
-        "com.immomo.molive.plugin.PluginShadowActivity",
-    )
+import com.tencent.shadow.core.transform_kit.ReplaceClassName
+import com.tencent.shadow.core.transform_kit.SpecificTransform
+import com.tencent.shadow.core.transform_kit.TransformStep
+import javassist.CtClass
 
+open class SimpleFilterRenameTransform(private val fromToMap: Map<String, String>,private val filter: List<String>) : SpecificTransform() {
+    final override fun setup(allInputClass: Set<CtClass>) {
+        newStep(object : TransformStep {
+            override fun filter(allInputClass: Set<CtClass>) =
+                filterRefClasses(allInputClass, filter)
 
-)
+            override fun transform(ctClass: CtClass) {
+                fromToMap.forEach {
+                    ReplaceClassName.replaceClassName(ctClass, it.key, it.value)
+                }
+            }
+        })
+    }
+}
