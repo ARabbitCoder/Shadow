@@ -45,6 +45,7 @@ class TransformManager(
         PackageItemInfoTransform(),
         AppComponentFactoryTransform(),
         LayoutInflaterTransform(),
-        KeepHostContextTransform(useHostContext())
+        KeepHostContextTransform(useHostContext()),
+        KeepActivityTransform()
     )
 }

@@ -5,6 +5,7 @@ dependencies {
     api "com.android.tools.build:gradle:$build_gradle_version"
     api "com.android.tools:common:30.0.3"
     api 'org.javassist:javassist:3.28.0-GA'
+    api "net.bytebuddy:byte-buddy:1.7.9"
     api gradleApi()
     testImplementation 'junit:junit:4.12'
     testImplementation 'commons-io:commons-io:2.9.0'
