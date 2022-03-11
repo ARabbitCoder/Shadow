@@ -24,9 +24,7 @@ class ActivityTransform : SimpleFilterRenameTransform(
                 to "com.tencent.shadow.core.runtime.ShadowActivity",
         "android.app.NativeActivity"
                 to "com.tencent.shadow.core.runtime.ShadowNativeActivity"
-    ), arrayListOf<String>(
-        "com.immomo.molive.plugin.PluginShadowActivity",
-    )
+    ), listOf("com.immomo.molive.plugin.PluginShadowActivity")
 
 
 )
