@@ -76,6 +76,7 @@ object ReplaceClassName {
                             methodMap = mutableMapOf()
                             errorResult[refClassName] = methodMap
                         }
+                        println("NoSuchMethod!!!: $methodString")
                         var useSet = methodMap[methodString]
                         if (useSet == null) {
                             useSet = mutableSetOf()
