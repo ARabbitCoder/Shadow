@@ -30,6 +30,7 @@ open class SimpleRenameTransform(private val fromToMap: Map<String, String>) : S
 
             override fun transform(ctClass: CtClass) {
                 fromToMap.forEach {
+                    System.out.println("处理" + ctClass.name +"--"+it.key+":"+it.value)
                     ReplaceClassName.replaceClassName(ctClass, it.key, it.value)
                 }
             }
