@@ -110,19 +110,15 @@ class KeepActivityTransform : SpecificTransform() {
             exceptions: Array<String>?
         ): MethodVisitor {
             val methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
-            if (name == "bindActivity") {
-                println("开始Keep bindActivity ")
-                return MyMethodVisitor(
-                    api,
-                    methodVisitor,
-                    access,
-                    name,
-                    desc,
-                    signature,
-                    exceptions
-                )
-            }
-            return methodVisitor
+            return MyMethodVisitor(
+                api,
+                methodVisitor,
+                access,
+                name,
+                desc,
+                signature,
+                exceptions
+            )
         }
 
         private inner class MyMethodVisitor(
@@ -134,50 +130,38 @@ class KeepActivityTransform : SpecificTransform() {
             signature: String?,
             exceptions: Array<String>?
         ) : MethodVisitor(api, methodVisitor) {
+
+            private var inject: Boolean = false
+
             override fun visitMethodInsn(
                 opcode: Int,
-                owner: String,
-                name: String,
-                desc: String,
+                owner: String?,
+                name: String?,
+                desc: String?,
                 itf: Boolean
             ) {
                 var desc = desc
-                println("$owner $name $desc")
-                if (desc == "(Lcom/tencent/shadow/core/runtime/ShadowActivity;)V") {
-                    super.visitMethodInsn(
-                        Opcodes.INVOKESTATIC,
-                        "com/immomo/hani/molive/AppManager",
-                        "getActivity",
-                        "()Landroid/app/Activity;",
-                        false
-                    )
-                    desc = "(Landroid/app/Activity;)V"
+                if (inject) {
+                    println("开始Keep $owner $name $desc")
+                    if (desc == "(Lcom/tencent/shadow/core/runtime/ShadowActivity;)V") {
+                        super.visitMethodInsn(
+                            Opcodes.INVOKESTATIC,
+                            "com/immomo/hani/molive/AppManager",
+                            "getActivity",
+                            "()Landroid/app/Activity;",
+                            false
+                        )
+                        desc = "(Landroid/app/Activity;)V"
+                    }
                 }
                 super.visitMethodInsn(opcode, owner, name, desc, itf)
             }
 
-            override fun visitVarInsn(opcode: Int, `var`: Int) {
-                super.visitVarInsn(opcode, `var`)
-            }
-
-            override fun visitLabel(label: Label) {
-                super.visitLabel(label)
-            }
-
-            override fun visitLocalVariable(
-                name: String,
-                desc: String,
-                signature: String,
-                start: Label,
-                end: Label,
-                index: Int
-            ) {
-                super.visitLocalVariable(name, desc, signature, start, end, index)
-            }
-
-            override fun visitLdcInsn(cst: Any) {
-                println(cst)
-                super.visitLdcInsn(cst)
+            override fun visitAnnotation(desc: String?, visible: Boolean): AnnotationVisitor? {
+                if ("Landroidx/annotation/Keep;" == desc) {
+                    inject = true
+                }
+                return super.visitAnnotation(desc, visible)
             }
         }
     }
