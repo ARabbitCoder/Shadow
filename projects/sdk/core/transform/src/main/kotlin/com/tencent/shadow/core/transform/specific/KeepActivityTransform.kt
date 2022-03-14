@@ -35,22 +35,20 @@ class KeepActivityTransform : SpecificTransform() {
                     e.printStackTrace()
                 }
 
-
-//                CtMethod[] declaredMethods = ctClass.getDeclaredMethods();
-//                for (CtMethod ctMethod : declaredMethods) {
-//
-//                    if (ctMethod.hasAnnotation("androidx.annotation.Keep")) {
-//                        try {
-//                            renameMethod(ctMethod, mClassPool);
-//                        } catch (NotFoundException e) {
-//                            e.printStackTrace();
-//                        } catch (CannotCompileException e) {
-//                            e.printStackTrace();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
+                val newClass = mClassPool.getCtClass(ctClass.name)
+                newClass.declaredMethods.forEach { ctMethod ->
+                    if (ctMethod.hasAnnotation("androidx.annotation.Keep")) {
+                        try {
+                            renameMethod(ctMethod, mClassPool);
+                        } catch (e: NotFoundException) {
+                            e.printStackTrace();
+                        } catch (e: CannotCompileException) {
+                            e.printStackTrace();
+                        } catch (e: IOException) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         })
     }
@@ -75,22 +73,22 @@ class KeepActivityTransform : SpecificTransform() {
                     if (parameterTypes != null) {
                         val paramArray = arrayOfNulls<String>(parameterTypes.size)
                         for (i in parameterTypes.indices) {
-                            paramArray[i] = "$$i"
+                            paramArray[i] = "$${i+1}"
                         }
                         var isNeed = false
                         for (i in parameterTypes.indices) {
                             val name = parameterTypes[i].classFile.name
                             println("$name: $methodName")
-                            if (name == "com.tencent.shadow.core.runtime.ShadowActivity") {
-                                paramArray[i] = "com.immomo.hani.molive.AppManager2.getActivity()"
+                            if (name == "com.tencent.shadow.core.runtime.ShadowActivity" || name == "android.app.Activity") {
+                                paramArray[i] = "com.immomo.hani.molive.AppManager.getActivity()"
                                 isNeed = true
                             }
                         }
                         if (isNeed) {
-                            val method2 = methodName + "2"
                             val params = Joiner.on(',').join(paramArray)
-                            val s1 = String.format("($0).%1s( %2s);", method2, params)
-                            println("$className $s1")
+                            val s1 = String.format("$0.%1s( %2s);", methodName, params)
+                            println("命中 $className $s1")
+
                             methodCall.replace(s1)
                         }
                     }
@@ -142,16 +140,18 @@ class KeepActivityTransform : SpecificTransform() {
             ) {
                 var desc = desc
                 if (inject) {
-                    println("开始Keep $owner $name $desc")
-                    if (desc == "(Lcom/tencent/shadow/core/runtime/ShadowActivity;)V") {
-                        super.visitMethodInsn(
-                            Opcodes.INVOKESTATIC,
-                            "com/immomo/hani/molive/AppManager",
-                            "getActivity",
-                            "()Landroid/app/Activity;",
+                    println("Keep方法调用 $owner $name $desc")
+                    val oldDesc = desc
+                    if (desc != null) {
+                        val newDesc = desc.replace(
+                            "Lcom/tencent/shadow/core/runtime/ShadowActivity",
+                            "Landroid/app/Activity",
                             false
                         )
-                        desc = "(Landroid/app/Activity;)V"
+                        if (newDesc != oldDesc) {
+                            desc = newDesc
+                            println("命中 $owner $name $desc")
+                        }
                     }
                 }
                 super.visitMethodInsn(opcode, owner, name, desc, itf)
