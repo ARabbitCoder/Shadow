@@ -1,61 +1,38 @@
-package com.tencent.shadow.core.transform.specific;
+package com.tencent.shadow.core.transform.specific
 
-import com.google.common.base.Joiner;
-import com.tencent.shadow.core.transform_kit.SpecificTransform;
-import com.tencent.shadow.core.transform_kit.TransformStep;
+import com.google.common.base.Joiner
+import com.tencent.shadow.core.transform_kit.SpecificTransform
+import com.tencent.shadow.core.transform_kit.TransformStep
+import javassist.*
+import javassist.bytecode.Descriptor
+import javassist.bytecode.MethodInfo
+import javassist.expr.ExprEditor
+import javassist.expr.MethodCall
+import net.bytebuddy.jar.asm.*
+import java.io.ByteArrayInputStream
+import java.io.IOException
 
-import net.bytebuddy.jar.asm.ClassReader;
-import net.bytebuddy.jar.asm.ClassVisitor;
-import net.bytebuddy.jar.asm.ClassWriter;
-import net.bytebuddy.jar.asm.Label;
-import net.bytebuddy.jar.asm.MethodVisitor;
-import net.bytebuddy.jar.asm.Opcodes;
-
-import org.jetbrains.annotations.NotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Set;
-
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.NotFoundException;
-import javassist.bytecode.Descriptor;
-import javassist.bytecode.MethodInfo;
-import javassist.expr.ExprEditor;
-import javassist.expr.MethodCall;
-
-public class KeepActivityTransform extends SpecificTransform {
-    @Override
-    public void setup(@NotNull Set<? extends CtClass> allInputClass) {
-        newStep(new TransformStep() {
-            @NotNull
-            @Override
-            public Set<CtClass> filter(@NotNull Set<? extends CtClass> allInputClass) {
-                return (Set<CtClass>) allInputClass;
+class KeepActivityTransform : SpecificTransform() {
+    override fun setup(allInputClass: Set<CtClass>) {
+        newStep(object : TransformStep {
+            override fun filter(allInputClass: Set<CtClass>): Set<CtClass> {
+                return allInputClass
             }
 
-            @Override
-            public void transform(@NotNull CtClass ctClass) {
-
-                System.out.println("开始Keep");
-
-                ClassReader cr = null;
+            override fun transform(ctClass: CtClass) {
+                println("开始Keep")
+                var cr: ClassReader? = null
                 try {
-                    cr = new ClassReader(ctClass.toBytecode());
-                    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-                    cr.accept(new MyClassVisitor(cw),ClassReader.EXPAND_FRAMES);
-
-                    ctClass.defrost();
-                    byte[] bytes = cw.toByteArray();
-                    mClassPool.makeClass(new ByteArrayInputStream(bytes));
-
-                } catch (IOException | CannotCompileException e) {
-                    e.printStackTrace();
+                    cr = ClassReader(ctClass.toBytecode())
+                    val cw = ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
+                    cr.accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
+                    ctClass.defrost()
+                    val bytes = cw.toByteArray()
+                    mClassPool.makeClass(ByteArrayInputStream(bytes))
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                } catch (e: CannotCompileException) {
+                    e.printStackTrace()
                 }
 
 
@@ -75,118 +52,134 @@ public class KeepActivityTransform extends SpecificTransform {
 //                    }
 //                }
             }
-        });
+        })
     }
 
-
-
-    void renameMethod(CtMethod ctMethod, ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
-        ctMethod.instrument(new ExprEditor() {
-            @Override
-            public boolean doit(CtClass clazz, MethodInfo minfo) throws CannotCompileException {
-                return super.doit(clazz, minfo);
+    @Throws(NotFoundException::class, CannotCompileException::class, IOException::class)
+    fun renameMethod(ctMethod: CtMethod, classPool: ClassPool?) {
+        ctMethod.instrument(object : ExprEditor() {
+            @Throws(CannotCompileException::class)
+            override fun doit(clazz: CtClass, minfo: MethodInfo): Boolean {
+                return super.doit(clazz, minfo)
             }
 
-            @Override
-            public void edit(MethodCall methodCall) throws CannotCompileException {
-                super.edit(methodCall);
-
-                String methodName = methodCall.getMethodName();
-                String className = methodCall.getClassName();
-                String signature = methodCall.getSignature();
-                MethodInfo methodInfo2 = null;
-
+            @Throws(CannotCompileException::class)
+            override fun edit(methodCall: MethodCall) {
+                super.edit(methodCall)
+                val methodName = methodCall.methodName
+                val className = methodCall.className
+                val signature = methodCall.signature
+                val methodInfo2: MethodInfo? = null
                 try {
-                    CtClass[] parameterTypes = Descriptor.getParameterTypes(signature, classPool);
+                    val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
                     if (parameterTypes != null) {
-
-                        String[] paramArray = new String[parameterTypes.length];
-                        for (int i = 0; i < parameterTypes.length; i++) {
-                            paramArray[i] = "$" + i;
+                        val paramArray = arrayOfNulls<String>(parameterTypes.size)
+                        for (i in parameterTypes.indices) {
+                            paramArray[i] = "$$i"
                         }
-
-                        boolean isNeed = false;
-                        for (int i = 0; i < parameterTypes.length; i++) {
-                            String name = parameterTypes[i].getClassFile().getName();
-                            System.out.println(name + ": " + methodName);
-                            if (name.equals("com.tencent.shadow.core.runtime.ShadowActivity")) {
-                                paramArray[i] = "com.immomo.hani.molive.AppManager2.getActivity()";
-                                isNeed = true;
+                        var isNeed = false
+                        for (i in parameterTypes.indices) {
+                            val name = parameterTypes[i].classFile.name
+                            println("$name: $methodName")
+                            if (name == "com.tencent.shadow.core.runtime.ShadowActivity") {
+                                paramArray[i] = "com.immomo.hani.molive.AppManager2.getActivity()"
+                                isNeed = true
                             }
                         }
-
                         if (isNeed) {
-                            String method2 = methodName + "2";
-                            String params = Joiner.on(',').join(paramArray);
-                            String s1 = String.format("($0).%1s( %2s);", method2, params);
-                            System.out.println(className + " " + s1);
-                            methodCall.replace(s1);
+                            val method2 = methodName + "2"
+                            val params = Joiner.on(',').join(paramArray)
+                            val s1 = String.format("($0).%1s( %2s);", method2, params)
+                            println("$className $s1")
+                            methodCall.replace(s1)
                         }
                     }
-
-                } catch (NotFoundException e) {
-                    e.printStackTrace();
+                } catch (e: NotFoundException) {
+                    e.printStackTrace()
                 }
             }
-        });
+        })
     }
 
-    class MyClassVisitor extends ClassVisitor {
-        public MyClassVisitor(ClassVisitor api) {
-            super(Opcodes.ASM6, api);
+    internal inner class MyClassVisitor(api: ClassVisitor?) : ClassVisitor(Opcodes.ASM6, api) {
+        override fun visitMethod(
+            access: Int,
+            name: String?,
+            desc: String?,
+            signature: String?,
+            exceptions: Array<String>?
+        ): MethodVisitor {
+            println(name)
+            val methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+            if (name == "bindActivity") {
+                println("开始Keep bindActivity ")
+                return MyMethodVisitor(
+                    api,
+                    methodVisitor,
+                    access,
+                    name,
+                    desc,
+                    signature,
+                    exceptions
+                )
+            }
+            return methodVisitor
         }
 
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-            System.out.println(name);
-            MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-            if (name.equals("bindActivity")) {
-
-                System.out.println("开始Keep bindActivity ");
-                return new MyMethodVisitor(api, methodVisitor, access, name, desc, signature, exceptions);
-            }
-            return methodVisitor;
-        }
-
-
-
-        private class MyMethodVisitor extends MethodVisitor {
-            public MyMethodVisitor(int api, MethodVisitor methodVisitor, int access, String name, String desc, String signature, String[] exceptions) {
-                super(api, methodVisitor);
-            }
-
-            @Override
-            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                System.out.println(owner + " " + name + " " + desc);
-
-                if (desc.equals("(Lcom/tencent/shadow/core/runtime/ShadowActivity;)V")) {
-                    super.visitMethodInsn(Opcodes.INVOKESTATIC, "com/immomo/hani/molive/AppManager", "getActivity", "()Landroid/app/Activity;", false);
-                    desc = "(Landroid/app/Activity;)V";
+        private inner class MyMethodVisitor(
+            api: Int,
+            methodVisitor: MethodVisitor?,
+            access: Int,
+            name: String?,
+            desc: String?,
+            signature: String?,
+            exceptions: Array<String>?
+        ) : MethodVisitor(api, methodVisitor) {
+            override fun visitMethodInsn(
+                opcode: Int,
+                owner: String,
+                name: String,
+                desc: String,
+                itf: Boolean
+            ) {
+                var desc = desc
+                println("$owner $name $desc")
+                if (desc == "(Lcom/tencent/shadow/core/runtime/ShadowActivity;)V") {
+                    super.visitMethodInsn(
+                        Opcodes.INVOKESTATIC,
+                        "com/immomo/hani/molive/AppManager",
+                        "getActivity",
+                        "()Landroid/app/Activity;",
+                        false
+                    )
+                    desc = "(Landroid/app/Activity;)V"
                 }
-                super.visitMethodInsn(opcode, owner, name, desc, itf);
+                super.visitMethodInsn(opcode, owner, name, desc, itf)
             }
 
-            @Override
-            public void visitVarInsn(int opcode, int var) {
-                super.visitVarInsn(opcode, var);
+            override fun visitVarInsn(opcode: Int, `var`: Int) {
+                super.visitVarInsn(opcode, `var`)
             }
 
-            @Override
-            public void visitLabel(Label label) {
-                super.visitLabel(label);
+            override fun visitLabel(label: Label) {
+                super.visitLabel(label)
             }
 
-            @Override
-            public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-                super.visitLocalVariable(name, desc, signature, start, end, index);
+            override fun visitLocalVariable(
+                name: String,
+                desc: String,
+                signature: String,
+                start: Label,
+                end: Label,
+                index: Int
+            ) {
+                super.visitLocalVariable(name, desc, signature, start, end, index)
             }
 
-            @Override
-            public void visitLdcInsn(Object cst) {
-                System.out.println(cst);
-                super.visitLdcInsn(cst);
+            override fun visitLdcInsn(cst: Any) {
+                println(cst)
+                super.visitLdcInsn(cst)
             }
         }
     }
-
 }
