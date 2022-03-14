@@ -20,7 +20,7 @@ class KeepActivityTransform : SpecificTransform() {
             }
 
             override fun transform(ctClass: CtClass) {
-                println("开始Keep")
+                println("Keep检测 ${ctClass.name}")
                 var cr: ClassReader? = null
                 try {
                     cr = ClassReader(ctClass.toBytecode())
@@ -109,7 +109,6 @@ class KeepActivityTransform : SpecificTransform() {
             signature: String?,
             exceptions: Array<String>?
         ): MethodVisitor {
-            println(name)
             val methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
             if (name == "bindActivity") {
                 println("开始Keep bindActivity ")
