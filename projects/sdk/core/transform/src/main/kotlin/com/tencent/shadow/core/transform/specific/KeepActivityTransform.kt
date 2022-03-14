@@ -80,7 +80,7 @@ class KeepActivityTransform : SpecificTransform() {
                             val name = parameterTypes[i].classFile.name
                             println("$name: $methodName")
                             if (name == "com.tencent.shadow.core.runtime.ShadowActivity" || name == "android.app.Activity") {
-                                paramArray[i] = "com.immomo.hani.molive.AppManager.getActivity()"
+                                paramArray[i] = "com.immomo.hani.molive.AppManager2.getActivity()"
                                 isNeed = true
                             }
                         }
