@@ -46,6 +46,7 @@ class TransformManager(
         AppComponentFactoryTransform(),
         LayoutInflaterTransform(),
         KeepHostContextTransform(useHostContext()),
+        ScanMissMatchParamTransform(),
         KeepActivityTransform()
     )
 }
