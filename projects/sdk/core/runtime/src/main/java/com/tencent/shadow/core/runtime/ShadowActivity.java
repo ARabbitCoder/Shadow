@@ -18,6 +18,7 @@
 
 package com.tencent.shadow.core.runtime;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -168,5 +169,9 @@ public class ShadowActivity extends PluginActivity {
     @Override
     public void startActivityFromChild(ShadowActivity arg0, Intent arg1, int arg2, Bundle arg3) {
         throw new UnsupportedOperationException("Unsupported");
+    }
+
+    public Activity getImlActivity(){
+        return hostActivityDelegator.getHostActivity().getImplementActivity();
     }
 }
