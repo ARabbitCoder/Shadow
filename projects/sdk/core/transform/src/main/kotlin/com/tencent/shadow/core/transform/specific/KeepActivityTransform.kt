@@ -21,23 +21,12 @@ class KeepActivityTransform : SpecificTransform() {
 
             override fun transform(ctClass: CtClass) {
                 println("Keep检测 ${ctClass.name}")
-                var cr: ClassReader? = null
-                try {
-                    cr = ClassReader(ctClass.toBytecode())
-                    val cw = ClassWriter(cr, ClassWriter.COMPUTE_MAXS)
-                    cr.accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
-                    ctClass.defrost()
-                    val bytes = cw.toByteArray()
-                    mClassPool.makeClass(ByteArrayInputStream(bytes))
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                } catch (e: CannotCompileException) {
-                    e.printStackTrace()
-                }
 
-                val newClass = mClassPool.getCtClass(ctClass.name)
-                newClass.declaredMethods.forEach { ctMethod ->
+                var isNeedTransform = false
+
+                ctClass.declaredMethods.forEach { ctMethod ->
                     if (ctMethod.hasAnnotation("androidx.annotation.Keep")) {
+                        isNeedTransform = true
                         try {
                             renameMethod(ctMethod, mClassPool);
                         } catch (e: NotFoundException) {
@@ -47,6 +36,20 @@ class KeepActivityTransform : SpecificTransform() {
                         } catch (e: IOException) {
                             e.printStackTrace();
                         }
+                    }
+                }
+
+                if (isNeedTransform) {
+                    try {
+                        val bytes = mClassPool.get(ctClass.name).toBytecode()
+                        val cw = ClassWriter(ClassReader(bytes), ClassWriter.COMPUTE_MAXS)
+                        ClassReader(bytes).accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
+                        ctClass.defrost()
+                        mClassPool.makeClass(ByteArrayInputStream(cw.toByteArray())) //重新写入classpool，不然不生效
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    } catch (e: CannotCompileException) {
+                        e.printStackTrace()
                     }
                 }
             }
