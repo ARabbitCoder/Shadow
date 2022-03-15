@@ -28,7 +28,7 @@ class KeepActivityTransform : SpecificTransform() {
                     if (ctMethod.hasAnnotation("androidx.annotation.Keep")) {
                         isNeedTransform = true
                         try {
-                            renameMethod(ctMethod, mClassPool);
+                            //renameMethod(ctMethod, mClassPool);
                         } catch (e: NotFoundException) {
                             e.printStackTrace();
                         } catch (e: CannotCompileException) {
