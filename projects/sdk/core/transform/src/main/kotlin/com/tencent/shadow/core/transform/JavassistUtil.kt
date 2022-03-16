@@ -99,7 +99,7 @@ object JavassistUtil {
             return EmptyRule(configStrs[0],
                 parseModifierType(configStrs[1]),
                 parseReturnType(configStrs[2],classPool),configStrs[3],
-                parseParams(configStrs[3])
+                parseParams(configStrs[4])
             )
         }
         return null
@@ -114,14 +114,14 @@ object JavassistUtil {
     }
     fun parseReturnType(returnType:String,mClassPool: ClassPool): CtClass {
         when(returnType){
-            "void"-> CtClass.voidType
-            "Boolean"-> CtClass.booleanType
-            "Int"-> CtClass.intType
-            "Long"-> CtClass.longType
-            "Float"-> CtClass.floatType
-            "Char"-> CtClass.charType
-            "Short"-> CtClass.shortType
-            "Double"-> CtClass.doubleType
+            "void"-> return CtClass.voidType
+            "Boolean"-> return CtClass.booleanType
+            "Int"-> return CtClass.intType
+            "Long"-> return CtClass.longType
+            "Float"-> return CtClass.floatType
+            "Char"-> return CtClass.charType
+            "Short"-> return CtClass.shortType
+            "Double"-> return CtClass.doubleType
         }
         var getReturn = mClassPool.getOrNull(returnType)
         if(getReturn==null){
@@ -132,8 +132,9 @@ object JavassistUtil {
 
     fun parseModifierType(modifier:String):Int{
         when(modifier){
-            "public"-> Modifier.PUBLIC
-            "private"-> Modifier.PRIVATE
+            "public"-> return Modifier.PUBLIC
+            "private"-> return Modifier.PRIVATE
+            "public static"-> return (Modifier.PUBLIC or Modifier.STATIC)
         }
         return Modifier.PUBLIC
     }
