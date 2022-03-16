@@ -98,7 +98,7 @@ tasks.whenTaskAdded { task ->
 shadow {
     transform {
 //        useHostContext = ['abc']
-        useEmpty = ["com.immomo.hani.molive.PluginKit:public:android.app.Activity:getActivity(android.content.Context)"]
+        useEmpty = ["com.immomo.hani.molive.PluginKit:public static:android.app.Activity:getActivity:(android.content.Context)"]
     }
 
     packagePlugin {
