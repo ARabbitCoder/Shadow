@@ -49,7 +49,8 @@ class ShadowPlugin : Plugin<Project> {
             baseExtension.registerTransform(ShadowTransform(
                 project,
                 lateInitBuilder,
-                { shadowExtension.transformConfig.useHostContext }
+                { shadowExtension.transformConfig.useHostContext },
+                { shadowExtension.transformConfig.useEmpty }
             ))
         }
 
@@ -175,6 +176,7 @@ class ShadowPlugin : Plugin<Project> {
 
     class TransformConfig {
         var useHostContext: Array<String> = emptyArray()
+        var useEmpty: Array<String> = emptyArray()
     }
 
     companion object {
