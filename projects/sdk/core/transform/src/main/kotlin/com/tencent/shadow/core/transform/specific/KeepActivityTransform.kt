@@ -44,10 +44,12 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
             @Throws(CannotCompileException::class)
             override fun edit(methodCall: MethodCall) {
                 super.edit(methodCall)
+                val signature = methodCall.signature
+                if(!signature.contains("Lcom/tencent/shadow/core/runtime/ShadowActivity")){
+                    return
+                }
                 val methodName = methodCall.methodName
                 val className = methodCall.className
-                val signature = methodCall.signature
-
                 var returnType: CtClass?
                 try {
                     returnType = Descriptor.getReturnType(signature, classPool)
@@ -55,6 +57,7 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                     returnType = mClassPool.makeClass(e.message)
                     fakeClass.add(e.message)
                 }
+
 
                 val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
 
