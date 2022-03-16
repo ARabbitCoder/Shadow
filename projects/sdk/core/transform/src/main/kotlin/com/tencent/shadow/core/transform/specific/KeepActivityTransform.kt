@@ -1,6 +1,7 @@
 package com.tencent.shadow.core.transform.specific
 
 import com.google.common.base.Joiner
+import com.tencent.shadow.core.transform.JavassistUtil
 import com.tencent.shadow.core.transform_kit.SpecificTransform
 import com.tencent.shadow.core.transform_kit.TransformStep
 import javassist.*
@@ -12,7 +13,12 @@ import net.bytebuddy.jar.asm.*
 import java.io.ByteArrayInputStream
 import java.io.IOException
 
-class KeepActivityTransform : SpecificTransform() {
+class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTransform() {
+
+    init {
+        JavassistUtil.parseRulesAndMakeClass(emptyClass.toList(),mClassPool)
+    }
+
     override fun setup(allInputClass: Set<CtClass>) {
         newStep(object : TransformStep {
             override fun filter(allInputClass: Set<CtClass>): Set<CtClass> {
