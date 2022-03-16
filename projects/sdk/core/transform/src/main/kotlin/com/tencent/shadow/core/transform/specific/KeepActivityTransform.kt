@@ -16,13 +16,12 @@ import java.io.IOException
 class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTransform() {
 
     val hitMethods = hashSetOf<String>()
-    val fakeClass =  hashSetOf<CtClass?>()
-
-    init {
-        JavassistUtil.parseRulesAndMakeClass(emptyClass.toList(),mClassPool)
-    }
+    val fakeClass =  hashSetOf<String?>()
 
     override fun setup(allInputClass: Set<CtClass>) {
+
+        JavassistUtil.parseRulesAndMakeClass(emptyClass.toList(),mClassPool)
+
         newStep(object : TransformStep {
             override fun filter(allInputClass: Set<CtClass>): Set<CtClass> {
                 return allInputClass
@@ -34,34 +33,21 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                 hitMethods.clear()
 
                 ctClass.declaredMethods.forEach { ctMethod ->
-                    try {
-                        renameMethod(ctClass, ctMethod, mClassPool);
-                    } catch (e: NotFoundException) {
-                        e.printStackTrace();
-                    } catch (e: CannotCompileException) {
-                        e.printStackTrace();
-                    } catch (e: IOException) {
-                        e.printStackTrace();
-                    }
+                    renameMethod(ctClass, ctMethod, mClassPool);
                 }
 
-                try {
-                    val bytes = mClassPool.get(ctClass.name).toBytecode()
-                    val cw = ClassWriter(ClassReader(bytes), ClassWriter.COMPUTE_MAXS)
-                    ClassReader(bytes).accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
-                    ctClass.defrost()
-                    mClassPool.makeClass(ByteArrayInputStream(cw.toByteArray())) //重新写入classpool，不然不生效
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                } catch (e: CannotCompileException) {
-                    e.printStackTrace()
-                }
+                val bytes = mClassPool.get(ctClass.name).toBytecode()
+                val cw = ClassWriter(ClassReader(bytes), ClassWriter.COMPUTE_MAXS)
+                ClassReader(bytes).accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
+                ctClass.defrost()
+                mClassPool.makeClass(ByteArrayInputStream(cw.toByteArray())) //重新写入classpool，不然不生效
             }
         })
     }
 
     @Throws(NotFoundException::class, CannotCompileException::class, IOException::class)
     fun renameMethod(ctClass: CtClass, ctMethod: CtMethod, classPool: ClassPool) {
+        println("Javassit: ${ctClass.name}")
         ctMethod.instrument(object : ExprEditor() {
             @Throws(CannotCompileException::class)
             override fun doit(clazz: CtClass, minfo: MethodInfo): Boolean {
@@ -75,12 +61,13 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                 val className = methodCall.className
                 val signature = methodCall.signature
 
-                val returnType: CtClass? = try {
-                    Descriptor.getReturnType(signature, classPool)
+                var returnType: CtClass?
+                try {
+                    returnType = Descriptor.getReturnType(signature, classPool)
                 } catch (e: NotFoundException) {
-                    mClassPool.makeClass(e.message)
+                    returnType = mClassPool.makeClass(e.message)
+                    fakeClass.add(e.message)
                 }
-                fakeClass.add(returnType)
 
                 val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
 
@@ -94,7 +81,7 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                     var hit = false
                     for (i in parameterTypes.indices) {
                         val name = parameterTypes[i].name
-                        if (name == "com.tencent.shadow.core.runtime.ShadowActivity" || name == "android.app.Activity") {
+                        if (name == "com.tencent.shadow.core.runtime.ShadowActivity") {
                             paramArray[i] =
                                 "com.immomo.hani.molive.PluginKit.getActivity($${i + 1})"
                             parameterTypes[i] = mClassPool.get("android.app.Activity")
@@ -104,12 +91,9 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
 
                     if (hit) {
                         val params = Joiner.on(',').join(paramArray)
-                        try {
-                            println("Javassit: ${ctClass.name}")
-                            classPool.get(className)
+                        val clazz = classPool.getOrNull(className)
 
-                        } catch (e: NotFoundException) { // 调用宿主依赖Activity的方法
-
+                        if (clazz == null || fakeClass.contains(className)) { // 调用宿主依赖Activity的方法
                             val methodID = "${ctMethod.name} ${ctMethod.signature}"
                             hitMethods.add(methodID)
                             println("Javassit: $methodID")
@@ -121,7 +105,6 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
 
                             methodCall.replace(code)
                         }
-
                     }
                 }
             }
@@ -169,7 +152,7 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
             CtNewMethod.make(modifier, returnType, methodName, parameterClassNames, null, body, ctClass);
         ctClass.addMethod(addMethod);
 
-        fakeClass.add(ctClass)
+        fakeClass.add(ctClass.name)
     }
 
     internal inner class MyClassVisitor(api: ClassVisitor?) : ClassVisitor(Opcodes.ASM6, api) {
@@ -214,8 +197,8 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                 desc: String?,
                 itf: Boolean
             ) {
-                var desc = desc
                 println("Keep方法调用 $owner $name $desc")
+                var desc = desc
                 val oldDesc = desc
                 if (desc != null) {
                     val newDesc = desc.replace(
