@@ -9,13 +9,10 @@ import javassist.bytecode.Descriptor
 import javassist.bytecode.MethodInfo
 import javassist.expr.ExprEditor
 import javassist.expr.MethodCall
-import net.bytebuddy.jar.asm.*
-import java.io.ByteArrayInputStream
 import java.io.IOException
 
 class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTransform() {
 
-    val hitMethods = hashSetOf<String>()
     val fakeClass =  hashSetOf<String?>()
 
     override fun setup(allInputClass: Set<CtClass>) {
@@ -28,19 +25,9 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
             }
 
             override fun transform(ctClass: CtClass) {
-//                println("Keep检测 ${ctClass.name}")
-
-                hitMethods.clear()
-
                 ctClass.declaredMethods.forEach { ctMethod ->
                     renameMethod(ctClass, ctMethod, mClassPool);
                 }
-
-                val bytes = mClassPool.get(ctClass.name).toBytecode()
-                val cw = ClassWriter(ClassReader(bytes), ClassWriter.COMPUTE_MAXS)
-                ClassReader(bytes).accept(MyClassVisitor(cw), ClassReader.EXPAND_FRAMES)
-                ctClass.defrost()
-                mClassPool.makeClass(ByteArrayInputStream(cw.toByteArray())) //重新写入classpool，不然不生效
             }
         })
     }
@@ -95,7 +82,7 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
 
                         if (clazz == null || fakeClass.contains(className)) { // 调用宿主依赖Activity的方法
                             val methodID = "${ctMethod.name} ${ctMethod.signature}"
-                            hitMethods.add(methodID)
+
                             println("Javassit: $methodID")
 
                             makeNew(className, returnType, methodName, parameterTypes)
@@ -153,66 +140,5 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
         ctClass.addMethod(addMethod);
 
         fakeClass.add(ctClass.name)
-    }
-
-    internal inner class MyClassVisitor(api: ClassVisitor?) : ClassVisitor(Opcodes.ASM6, api) {
-        override fun visitMethod(
-            access: Int,
-            name: String?,
-            desc: String?,
-            signature: String?,
-            exceptions: Array<String>?
-        ): MethodVisitor {
-            val methodID = "$name $signature"
-            println("ASM: $methodID")
-            val methodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
-            if (hitMethods.contains(methodID)) {
-                return MyMethodVisitor(
-                    api,
-                    methodVisitor,
-                    access,
-                    name,
-                    desc,
-                    signature,
-                    exceptions
-                )
-            }
-            return methodVisitor
-        }
-
-        private inner class MyMethodVisitor(
-            api: Int,
-            methodVisitor: MethodVisitor?,
-            access: Int,
-            name: String?,
-            desc: String?,
-            signature: String?,
-            exceptions: Array<String>?
-        ) : MethodVisitor(api, methodVisitor) {
-
-            override fun visitMethodInsn(
-                opcode: Int,
-                owner: String?,
-                name: String?,
-                desc: String?,
-                itf: Boolean
-            ) {
-                println("Keep方法调用 $owner $name $desc")
-                var desc = desc
-                val oldDesc = desc
-                if (desc != null) {
-                    val newDesc = desc.replace(
-                        "Lcom/tencent/shadow/core/runtime/ShadowActivity",
-                        "Landroid/app/Activity",
-                        false
-                    )
-                    if (newDesc != oldDesc) {
-                        desc = newDesc
-                        println("命中 $owner $name $desc")
-                    }
-                }
-                super.visitMethodInsn(opcode, owner, name, desc, itf)
-            }
-        }
     }
 }

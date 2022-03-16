@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 
 import com.tencent.shadow.sample.plugin.app.lib.R;
+import com.tencent.shadow.sample.host.lib.UICallback;
 import com.tencent.shadow.sample.plugin.app.lib.gallery.cases.entity.UseCase;
 import com.tencent.shadow.sample.plugin.app.lib.gallery.util.ToastUtil;
 
@@ -45,11 +46,14 @@ public class TestActivityOnCreate extends Activity {
         }
     }
 
+    public UICallback callback = new UICallback();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_activity_lifecycle);
-        ToastUtil.showToast(this, "onCreate");
+        ToastUtil.showToast(this, "knn");
+        callback.bindActivity(this, getResources());
     }
 
     @Override
