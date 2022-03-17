@@ -58,8 +58,8 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                     fakeClass.add(e.message)
                 }
 
-
-                val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
+                //val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
+                val parameterTypes = JavassistUtil.getParameterTypesExt(signature, classPool,fakeClass)
 
                 if (parameterTypes != null) {
 
@@ -89,8 +89,12 @@ class KeepActivityTransform(private val emptyClass: Array<String>) : SpecificTra
                             println("Javassit: $methodID")
 
                             makeNew(className, returnType, methodName, parameterTypes)
-
-                            val code = String.format("$0.%1s( %2s);", methodName, params)
+                            var code=""
+                            code = if(returnType == CtClass.voidType){
+                                String.format("$0.%1s( %2s);", methodName, params)
+                            }else{
+                                String.format("${'$'}_=$0.%1s( %2s);", methodName, params)
+                            }
                             println("命中 $className $code")
 
                             methodCall.replace(code)

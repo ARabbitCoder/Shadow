@@ -1,9 +1,7 @@
 package com.tencent.shadow.core.transform
 
-import javassist.ClassPool
-import javassist.CtClass
-import javassist.CtNewMethod
-import javassist.Modifier
+import javassist.*
+import javassist.bytecode.Descriptor
 
 object JavassistUtil {
     //"com.sample.test.Empty:public:void:test:(com.sample.test.Param1,com.sample.test.Param2)"
@@ -137,6 +135,19 @@ object JavassistUtil {
             "public static"-> return (Modifier.PUBLIC or Modifier.STATIC)
         }
         return Modifier.PUBLIC
+    }
+
+
+    fun getParameterTypesExt(signature:String,classPool:ClassPool,fakeClass:HashSet<String?>):Array<CtClass>{
+        return try {
+            val parameterTypes = Descriptor.getParameterTypes(signature, classPool)
+            parameterTypes
+        }catch (e:NotFoundException){
+            println("$signature not find class:${e.message}")
+            classPool.makeClass(e.message)
+            fakeClass.add(e.message)
+            getParameterTypesExt(signature, classPool, fakeClass)
+        }
     }
 
     data class EmptyRule(

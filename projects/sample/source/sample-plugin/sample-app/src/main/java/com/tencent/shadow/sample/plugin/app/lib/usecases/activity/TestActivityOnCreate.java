@@ -19,9 +19,11 @@
 package com.tencent.shadow.sample.plugin.app.lib.usecases.activity;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 
+import com.tencent.shadow.sample.host.lib.TestUtils;
 import com.tencent.shadow.sample.plugin.app.lib.R;
 import com.tencent.shadow.sample.host.lib.UICallback;
 import com.tencent.shadow.sample.plugin.app.lib.gallery.cases.entity.UseCase;
@@ -52,8 +54,8 @@ public class TestActivityOnCreate extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_activity_lifecycle);
-        ToastUtil.showToast(this, "knn");
-        callback.bindActivity(this, getResources());
+        ToastUtil.showToast(this, "kaannaanss");
+        callback.bindActivity(this, getResources(),new UICallback.TestData());
     }
 
     @Override
