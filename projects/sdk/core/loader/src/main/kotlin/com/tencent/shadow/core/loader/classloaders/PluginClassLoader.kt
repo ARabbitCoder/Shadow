@@ -88,26 +88,26 @@ class PluginClassLoader(
             //非插件中的代码，一律从宿主中加载
             if (!className.inPackage(allHostWhiteTrie)) {
                 return super.loadClass(className, resolve)
-            }
+            }else{
+                var suppressed: ClassNotFoundException? = null
+                if (clazz == null) {
+                    try {
+                        clazz = findClass(className)!!
+                        return clazz
+                    } catch (e: ClassNotFoundException) {
+                        suppressed = e
+                    }
+                }
 
-
-            var suppressed: ClassNotFoundException? = null
-            try {
-                //正常的ClassLoader这里是parent.loadClass,插件用specialClassLoader以跳过parent
-                clazz = specialClassLoader.loadClass(className)!!
-            } catch (e: ClassNotFoundException) {
-                suppressed = e
-            }
-            if (clazz == null) {
                 try {
-                    clazz = findClass(className)!!
+                    //正常的ClassLoader这里是parent.loadClass,插件用specialClassLoader以跳过parent
+                    clazz = specialClassLoader.loadClass(className)!!
                 } catch (e: ClassNotFoundException) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         e.addSuppressed(suppressed)
                     }
                     throw e
                 }
-
             }
         }
 
