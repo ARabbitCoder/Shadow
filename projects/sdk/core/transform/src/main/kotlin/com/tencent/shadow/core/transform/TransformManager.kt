@@ -47,6 +47,6 @@ class TransformManager(
         AppComponentFactoryTransform(),
         LayoutInflaterTransform(),
         KeepHostContextTransform(useHostContext()),
-        KeepActivityTransform(useEmpty())
+        AsmKeepActivityTransform()
     )
 }
