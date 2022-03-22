@@ -283,4 +283,25 @@ public class MixResources extends ResourcesWrapper {
             return mHostResources.openRawResourceFd(id);
         }
     }
+
+    //getResourcePackageName
+    //getResourceEntryName
+
+    @Override
+    public String getResourcePackageName(int id) throws NotFoundException {
+        try {
+            return super.getResourcePackageName(id);
+        } catch (NotFoundException e) {
+            return mHostResources.getResourcePackageName(id);
+        }
+    }
+
+    @Override
+    public String getResourceEntryName(int id) throws NotFoundException {
+        try {
+            return super.getResourceEntryName(id);
+        } catch (NotFoundException e) {
+            return mHostResources.getResourceEntryName(id);
+        }
+    }
 }
