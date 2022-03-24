@@ -45,7 +45,8 @@ object CreateResourceBloc {
         applicationInfo.sourceDir = archiveFilePath
         applicationInfo.sharedLibraryFiles = hostAppContext.applicationInfo.sharedLibraryFiles
         try {
-            return packageManager.getResourcesForApplication(applicationInfo)
+            return hostAppContext.resources
+            //return packageManager.getResourcesForApplication(applicationInfo)
         } catch (e: PackageManager.NameNotFoundException) {
             throw RuntimeException(e)
         }
