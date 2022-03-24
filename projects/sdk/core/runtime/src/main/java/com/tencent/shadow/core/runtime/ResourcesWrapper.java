@@ -299,20 +299,21 @@ public class ResourcesWrapper extends Resources {
         }
     }
 
-    public Drawable loadDrawable(TypedValue value, int id, int density, Theme theme) throws Exception {
+    public Drawable loadDrawable(TypedValue value, int id, int density, Theme theme) throws NotFoundException  {
         if (mBase != null) {
             return reflectorLoadDrawable(mBase, value, id, density, theme);
         }
         return null;
     }
 
-    public Drawable reflectorLoadDrawable(Resources resources, TypedValue value, int id, int density, Theme theme) throws Exception {
+    public Drawable reflectorLoadDrawable(Resources resources, TypedValue value, int id, int density, Theme theme) throws NotFoundException  {
         try {
             Method loadMethod = resources.getClass().getMethod("loadDrawable", TypedValue.class, Integer.class, Integer.class, Theme.class);
             loadMethod.setAccessible(true);
             return (Drawable) loadMethod.invoke(resources, value, id, density, theme);
         } catch (Exception e) {
-            throw e;
+            e.printStackTrace();
+            throw new NotFoundException(e.getMessage());
         }
     }
 }

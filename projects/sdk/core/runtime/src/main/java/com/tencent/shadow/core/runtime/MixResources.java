@@ -308,10 +308,10 @@ public class MixResources extends ResourcesWrapper {
 
     @Override
     public Drawable loadDrawable(TypedValue value, int id, int density, Theme theme)
-            throws Exception {
+            throws NotFoundException  {
         try {
             return super.loadDrawable(value, id, density, theme);
-        } catch (Exception e) {
+        } catch (NotFoundException e) {
             return reflectorLoadDrawable(mHostResources, value, id, density, theme);
         }
     }
