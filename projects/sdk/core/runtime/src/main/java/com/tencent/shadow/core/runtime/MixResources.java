@@ -18,6 +18,7 @@
 
 package com.tencent.shadow.core.runtime;
 
+
 import android.annotation.TargetApi;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.ColorStateList;
@@ -302,6 +303,16 @@ public class MixResources extends ResourcesWrapper {
             return super.getResourceEntryName(id);
         } catch (NotFoundException e) {
             return mHostResources.getResourceEntryName(id);
+        }
+    }
+
+    @Override
+    public Drawable loadDrawable(TypedValue value, int id, int density, Theme theme)
+            throws Exception {
+        try {
+            return super.loadDrawable(value, id, density, theme);
+        } catch (Exception e) {
+            return reflectorLoadDrawable(mHostResources, value, id, density, theme);
         }
     }
 }

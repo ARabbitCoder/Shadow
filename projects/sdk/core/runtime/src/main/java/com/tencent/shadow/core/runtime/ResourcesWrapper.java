@@ -38,6 +38,8 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class ResourcesWrapper extends Resources {
 
@@ -294,6 +296,23 @@ public class ResourcesWrapper extends Resources {
         super.updateConfiguration(config, metrics);
         if (mBase != null) { // called from super's constructor. So, need to check.
             mBase.updateConfiguration(config, metrics);
+        }
+    }
+
+    public Drawable loadDrawable(TypedValue value, int id, int density, Theme theme) throws Exception {
+        if (mBase != null) {
+            return reflectorLoadDrawable(mBase, value, id, density, theme);
+        }
+        return null;
+    }
+
+    public Drawable reflectorLoadDrawable(Resources resources, TypedValue value, int id, int density, Theme theme) throws Exception {
+        try {
+            Method loadMethod = resources.getClass().getMethod("loadDrawable", TypedValue.class, Integer.class, Integer.class, Theme.class);
+            loadMethod.setAccessible(true);
+            return (Drawable) loadMethod.invoke(resources, value, id, density, theme);
+        } catch (Exception e) {
+            throw e;
         }
     }
 }
