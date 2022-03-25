@@ -18,6 +18,7 @@
 
 package com.tencent.shadow.core.loader.blocs
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -26,7 +27,6 @@ import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.webkit.WebView
-import java.io.File
 import java.lang.reflect.Method
 import java.util.concurrent.CountDownLatch
 
@@ -49,7 +49,6 @@ object CreateResourceBloc {
         applicationInfo.sharedLibraryFiles = hostAppContext.applicationInfo.sharedLibraryFiles
         try {
             return createResources(hostAppContext,archiveFilePath)
-            //return packageManager.getResourcesForApplication(applicationInfo)
         } catch (e: PackageManager.NameNotFoundException) {
             throw RuntimeException(e)
         }
@@ -57,24 +56,29 @@ object CreateResourceBloc {
     }
 
 
-
-    fun createResources(context:Context,  pluginApkPath: String):Resources{
-        val AssetManagerClass: Class<out AssetManager?> = AssetManager::class.java
-        val assetManager: AssetManager? = AssetManagerClass.newInstance()
+    @SuppressLint("PrivateApi")
+    private fun createResources(context: Context, pluginApkPath: String): Resources {
+        val assetManagerClass: Class<out AssetManager?> = AssetManager::class.java
+        val assetManager: AssetManager? = assetManagerClass.newInstance()
         // 将插件资源和宿主资源通过 addAssetPath方法添加进去
-        val addAssetPathMethod: Method = AssetManagerClass.getDeclaredMethod("addAssetPath", String::class.java)
-        addAssetPathMethod.setAccessible(true)
+        val addAssetPathMethod: Method = assetManagerClass.getDeclaredMethod(
+            "addAssetPathInternal",
+            String::class.java,
+            Boolean::class.java,
+            Boolean::class.java
+        )
+        addAssetPathMethod.isAccessible = true
         val hostResourcePath = context.packageResourcePath
-        val result_1 = addAssetPathMethod.invoke(assetManager, hostResourcePath) as Int
-        val result_2 = addAssetPathMethod.invoke(assetManager, pluginApkPath) as Int
+        val result_host =
+            addAssetPathMethod.invoke(assetManager, hostResourcePath, false, false) as Int
+        //先添加宿主后添加插件, 让插件resource变更能够覆盖宿主
+        val result_plugin =
+            addAssetPathMethod.invoke(assetManager, pluginApkPath, false, false) as Int
         // 接下来创建，合并资源后的Resource
-        val resources = Resources(
+        return Resources(
             assetManager,
             context.resources.displayMetrics,
             context.resources.configuration
         )
-        return resources
     }
-
-
 }
