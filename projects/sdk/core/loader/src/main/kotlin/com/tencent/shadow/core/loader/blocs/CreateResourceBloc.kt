@@ -21,10 +21,13 @@ package com.tencent.shadow.core.loader.blocs
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.webkit.WebView
+import java.io.File
+import java.lang.reflect.Method
 import java.util.concurrent.CountDownLatch
 
 object CreateResourceBloc {
@@ -45,11 +48,33 @@ object CreateResourceBloc {
         applicationInfo.sourceDir = archiveFilePath
         applicationInfo.sharedLibraryFiles = hostAppContext.applicationInfo.sharedLibraryFiles
         try {
-            return hostAppContext.resources
+            return createResources(hostAppContext,archiveFilePath)
             //return packageManager.getResourcesForApplication(applicationInfo)
         } catch (e: PackageManager.NameNotFoundException) {
             throw RuntimeException(e)
         }
 
     }
+
+
+
+    fun createResources(context:Context,  pluginApkPath: String):Resources{
+        val AssetManagerClass: Class<out AssetManager?> = AssetManager::class.java
+        val assetManager: AssetManager? = AssetManagerClass.newInstance()
+        // 将插件资源和宿主资源通过 addAssetPath方法添加进去
+        val addAssetPathMethod: Method = AssetManagerClass.getDeclaredMethod("addAssetPath", String::class.java)
+        addAssetPathMethod.setAccessible(true)
+        val hostResourcePath = context.packageResourcePath
+        val result_1 = addAssetPathMethod.invoke(assetManager, hostResourcePath) as Int
+        val result_2 = addAssetPathMethod.invoke(assetManager, pluginApkPath) as Int
+        // 接下来创建，合并资源后的Resource
+        val resources = Resources(
+            assetManager,
+            context.resources.displayMetrics,
+            context.resources.configuration
+        )
+        return resources
+    }
+
+
 }
