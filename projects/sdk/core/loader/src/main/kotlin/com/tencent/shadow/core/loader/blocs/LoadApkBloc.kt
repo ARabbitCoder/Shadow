@@ -59,7 +59,8 @@ object LoadApkBloc {
                 installedApk.libraryPath,
                 hostClassLoader,
                 hostParentClassLoader,
-                loadParameters.hostWhiteList
+                loadParameters.hostWhiteList,
+                loadParameters.hostListType
             )
         } else if (dependsOn.size == 1) {
             val partKey = dependsOn[0]
@@ -73,7 +74,8 @@ object LoadApkBloc {
                     installedApk.libraryPath,
                     pluginParts.classLoader,
                     null,
-                    loadParameters.hostWhiteList
+                    loadParameters.hostWhiteList,
+                    loadParameters.hostListType
                 )
             }
         } else {
@@ -93,7 +95,8 @@ object LoadApkBloc {
                 installedApk.libraryPath,
                 combineClassLoader,
                 null,
-                loadParameters.hostWhiteList
+                loadParameters.hostWhiteList,
+                loadParameters.hostListType
             )
         }
     }

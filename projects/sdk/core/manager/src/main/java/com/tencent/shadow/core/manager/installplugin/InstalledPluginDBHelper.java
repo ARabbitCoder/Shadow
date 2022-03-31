@@ -59,6 +59,11 @@ public class InstalledPluginDBHelper extends SQLiteOpenHelper {
      * 插件的businessName
      */
     public final static String COLUMN_BUSINESS_NAME = "businessName";
+
+    /**
+     * 插件的listType 白名单/黑名单 0/1
+     */
+    public final static String COLUMN_LIST_TYPE = "listType";
     /**
      * 插件的名称
      */

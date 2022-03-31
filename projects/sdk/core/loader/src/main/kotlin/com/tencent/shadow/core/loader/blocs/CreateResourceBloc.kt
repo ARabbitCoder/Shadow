@@ -27,11 +27,12 @@ import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import android.webkit.WebView
+import com.tencent.shadow.core.load_parameters.LoadParameters
 import java.lang.reflect.Method
 import java.util.concurrent.CountDownLatch
 
 object CreateResourceBloc {
-    fun create(archiveFilePath: String, hostAppContext: Context): Resources {
+    fun create(archiveFilePath: String, hostAppContext: Context, loadParameters: LoadParameters): Resources {
         //先用宿主context初始化一个WebView，以便WebView的逻辑去修改sharedLibraryFiles，将webview.apk添加进去
         val latch = CountDownLatch(1)
         Handler(Looper.getMainLooper()).post {
@@ -48,7 +49,11 @@ object CreateResourceBloc {
         applicationInfo.sourceDir = archiveFilePath
         applicationInfo.sharedLibraryFiles = hostAppContext.applicationInfo.sharedLibraryFiles
         try {
-            return createResources(hostAppContext,archiveFilePath)
+            return if(loadParameters.hostListType==LoadParameters.ISOLATE_TYPE){
+                packageManager.getResourcesForApplication(applicationInfo)
+            }else{
+                createResources(hostAppContext,archiveFilePath)
+            }
         } catch (e: PackageManager.NameNotFoundException) {
             throw RuntimeException(e)
         }

@@ -179,10 +179,11 @@ abstract public class BaseDynamicPluginManager extends BasePluginManager impleme
                 throw new NotFoundException("uuid==" + uuid + "partKey==" + partKey + "的Plugin找不到");
             }
             String businessName = part instanceof InstalledPlugin.PluginPart ? ((InstalledPlugin.PluginPart) part).businessName : null;
+            int listType = part instanceof InstalledPlugin.PluginPart ? ((InstalledPlugin.PluginPart) part).listType : 0;
             String[] dependsOn = part instanceof InstalledPlugin.PluginPart ? ((InstalledPlugin.PluginPart) part).dependsOn : null;
             String[] hostWhiteList = part instanceof InstalledPlugin.PluginPart ? ((InstalledPlugin.PluginPart) part).hostWhiteList : null;
             LoadParameters loadParameters
-                    = new LoadParameters(businessName, partKey, dependsOn, hostWhiteList);
+                    = new LoadParameters(businessName, partKey, dependsOn, hostWhiteList,listType);
 
             Parcel parcelExtras = Parcel.obtain();
             loadParameters.writeToParcel(parcelExtras, 0);

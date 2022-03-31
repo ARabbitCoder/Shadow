@@ -92,17 +92,19 @@ public class PluginConfig {
     public static class PluginFileInfo extends FileInfo {
         final String[] dependsOn;
         final String[] hostWhiteList;
+        final int listType;
         final String businessName;
 
-        PluginFileInfo(String businessName, FileInfo fileInfo, String[] dependsOn, String[] hostWhiteList) {
-            this(businessName, fileInfo.file, fileInfo.hash, dependsOn, hostWhiteList);
+        PluginFileInfo(String businessName, FileInfo fileInfo, String[] dependsOn, String[] hostWhiteList, int listType) {
+            this(businessName, fileInfo.file, fileInfo.hash, dependsOn, hostWhiteList, listType);
         }
 
-        PluginFileInfo(String businessName, File file, String hash, String[] dependsOn, String[] hostWhiteList) {
+        PluginFileInfo(String businessName, File file, String hash, String[] dependsOn, String[] hostWhiteList, int listType) {
             super(file, hash);
             this.businessName = businessName;
             this.dependsOn = dependsOn;
             this.hostWhiteList = hostWhiteList;
+            this.listType = listType;
         }
     }
 
@@ -154,7 +156,8 @@ public class PluginConfig {
         FileInfo fileInfo = getFileInfo(jsonObject, storageDir);
         String[] dependsOn = getArrayStringByName(jsonObject, "dependsOn");
         String[] hostWhiteList = getArrayStringByName(jsonObject, "hostWhiteList");
-        return new PluginFileInfo(businessName, fileInfo, dependsOn, hostWhiteList);
+        int listType = jsonObject.optInt("listType", 0);
+        return new PluginFileInfo(businessName, fileInfo, dependsOn, hostWhiteList, listType);
     }
 
     private static String[] getArrayStringByName(JSONObject jsonObject, String name) throws JSONException {

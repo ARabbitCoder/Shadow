@@ -71,7 +71,7 @@ public class HostApplication extends Application {
             LoadParameters loadParameters = new LoadParameters(null,
                     partKey,
                     null,
-                    hostWhiteList);
+                    hostWhiteList,0);
 
             Parcel parcel = Parcel.obtain();
             loadParameters.writeToParcel(parcel, 0);

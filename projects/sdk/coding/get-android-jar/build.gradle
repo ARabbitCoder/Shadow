@@ -6,10 +6,15 @@ android {
 
 def sdkPath = android.sdkComponents.getSdkDirectory().get().asFile.absolutePath
 def androidJarPath = new File(sdkPath, "platforms/${android.compileSdkVersion}/android.jar")
-
+def androidHideJarPath = new File(sdkPath, "platforms/${android.compileSdkVersion}/android-hide.jar")
 if (!androidJarPath.exists()) {
     println("File $androidJarPath not exists!")
     throw new RuntimeException("Android SDK ${android.compileSdkVersion} 没有安装")
+}
+
+if (androidHideJarPath.exists()) {
+    println("Hide File $androidJarPath exists")
+    ext.set('androidHideJarPath', androidHideJarPath)
 }
 
 ext.set('androidJarPath', androidJarPath)

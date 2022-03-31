@@ -35,12 +35,23 @@ public class LoadParameters implements Parcelable {
     public final String partKey;
     public final String[] dependsOn;
     public final String[] hostWhiteList;
+    public final int hostListType;
 
-    public LoadParameters(String businessName, String partKey, String[] dependsOn, String[] hostWhiteList) {
+    /**
+     * 隔离模式
+     */
+    public static final int ISOLATE_TYPE = 0;
+    /**
+     * 合并模式
+     */
+    public static final int MERGE_TYPE = 1;
+
+    public LoadParameters(String businessName, String partKey, String[] dependsOn, String[] hostWhiteList, int listType) {
         this.businessName = businessName;
         this.partKey = partKey;
         this.dependsOn = dependsOn;
         this.hostWhiteList = hostWhiteList;
+        this.hostListType = listType;
     }
 
     public LoadParameters(Parcel in) {
@@ -48,6 +59,7 @@ public class LoadParameters implements Parcelable {
         partKey = in.readString();
         dependsOn = in.createStringArray();
         hostWhiteList = in.createStringArray();
+        hostListType = in.readInt();
     }
 
     @Override
@@ -56,6 +68,7 @@ public class LoadParameters implements Parcelable {
         dest.writeString(partKey);
         dest.writeStringArray(dependsOn);
         dest.writeStringArray(hostWhiteList);
+        dest.writeInt(hostListType);
     }
 
     @Override

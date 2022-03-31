@@ -19,6 +19,7 @@
 package com.tencent.shadow.core.loader.classloaders
 
 import android.os.Build
+import com.tencent.shadow.core.load_parameters.LoadParameters
 import com.tencent.shadow.core.runtime.PluginManifest
 import dalvik.system.BaseDexClassLoader
 import org.jetbrains.annotations.TestOnly
@@ -43,7 +44,7 @@ class PluginClassLoader(
     optimizedDirectory: File?,
     librarySearchPath: String?,
     parent: ClassLoader,
-    private val specialClassLoader: ClassLoader?, hostWhiteList: Array<String>?
+    private val specialClassLoader: ClassLoader?, hostWhiteList: Array<String>?,listType:Int
 ) : BaseDexClassLoader(dexPath, optimizedDirectory, librarySearchPath, parent) {
 
     /**
@@ -51,6 +52,8 @@ class PluginClassLoader(
      * 在白名单包里面的宿主类，插件才可以访问
      */
     private val allHostWhiteTrie = PackageNameTrie()
+
+    private var mHostListType = 0
 
     private val loaderClassLoader = PluginClassLoader::class.java.classLoader!!
 
@@ -67,6 +70,7 @@ class PluginClassLoader(
             allHostWhiteTrie.insert("org.apache.http")
             allHostWhiteTrie.insert("org.apache.http.**")
         }
+        mHostListType = listType
     }
 
     @Throws(ClassNotFoundException::class)
@@ -83,31 +87,32 @@ class PluginClassLoader(
             if (className.subStringBeforeDot() == "com.tencent.shadow.core.runtime") {
                 return loaderClassLoader.loadClass(className)
             }
-
-
-            //非插件中的代码，一律从宿主中加载
-            if (!className.inPackage(allHostWhiteTrie)) {
+            //白名单模式：配置的是需要从宿主加载的名单，一律从宿主中加载
+            if(mHostListType == LoadParameters.ISOLATE_TYPE && className.inPackage(allHostWhiteTrie)){
                 return super.loadClass(className, resolve)
-            }else{
-                var suppressed: ClassNotFoundException? = null
-                if (clazz == null) {
-                    try {
-                        clazz = findClass(className)!!
-                        return clazz
-                    } catch (e: ClassNotFoundException) {
-                        suppressed = e
-                    }
-                }
-
+            }
+            //黑名单模式：配置的是需要从插件加载的名单，不在名单的一律从宿主中加载
+            if(mHostListType == LoadParameters.MERGE_TYPE && !className.inPackage(allHostWhiteTrie)){
+                return super.loadClass(className, resolve)
+            }
+            var suppressed: ClassNotFoundException? = null
+            if (clazz == null) {
                 try {
-                    //正常的ClassLoader这里是parent.loadClass,插件用specialClassLoader以跳过parent
-                    clazz = specialClassLoader.loadClass(className)!!
+                    clazz = findClass(className)!!
+                    return clazz
                 } catch (e: ClassNotFoundException) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        e.addSuppressed(suppressed)
-                    }
-                    throw e
+                    suppressed = e
                 }
+            }
+
+            try {
+                //正常的ClassLoader这里是parent.loadClass,插件用specialClassLoader以跳过parent
+                clazz = specialClassLoader.loadClass(className)!!
+            } catch (e: ClassNotFoundException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    e.addSuppressed(suppressed)
+                }
+                throw e
             }
         }
 

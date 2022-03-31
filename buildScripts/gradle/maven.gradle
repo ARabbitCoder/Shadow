@@ -430,39 +430,13 @@ publishing {
         }
     }
     repositories {
-        def useLocalCredential = false
-        Properties properties = new Properties()
-        def propertiesFile = project.rootProject.file('local.properties')
-        if (propertiesFile.exists()) {
-            properties.load(propertiesFile.newDataInputStream())
-
-            if ("${properties.getProperty('gpr.local')}".equalsIgnoreCase('true')) {
-                def user = properties.getProperty('gpr.user')
-                def key = properties.getProperty('gpr.key')
-                maven {
-                    name = "GitHubPackages"
-                    credentials {
-                        username = user
-                        password = key
-                    }
-                    url "https://maven.pkg.github.com/${user}/shadow"
-                }
-
-                useLocalCredential = true
+        maven {
+            name = "momo_shadow"
+            credentials {
+                username = NEXUS_USERNAME
+                password = NEXUS_PASSWORD
             }
-        }
-
-        if (!useLocalCredential && "${System.env.CI}".equalsIgnoreCase("true")) {
-            maven {
-                name = "GitHubPackages"
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
-                url "https://maven.pkg.github.com/" + "${System.env.GITHUB_REPOSITORY}".toLowerCase()
-            }
-        } else {
-            mavenLocal()
+            url = version.endsWith('SNAPSHOT') ? SNAPSHOT_REPOSITORY_URL : SNAPSHOT_REPOSITORY_URL
         }
     }
 }

@@ -120,10 +120,11 @@ public class InstalledDao {
 
                     String partKey = cursor.getString(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_PARTKEY));
 
+                    int listType = cursor.getInt(cursor.getColumnIndex(InstalledPluginDBHelper.COLUMN_LIST_TYPE));
                     if (type == InstalledType.TYPE_PLUGIN) {
                         String[] dependsOn = getArrayStringByColumnName(InstalledPluginDBHelper.COLUMN_DEPENDSON, cursor);
                         String[] hostWhiteList = getArrayStringByColumnName(InstalledPluginDBHelper.COLUMN_HOST_WHITELIST, cursor);
-                        installedPlugin.plugins.put(partKey, new InstalledPlugin.PluginPart(type, businessName, pluginFile, oDexDir, libDir, dependsOn, hostWhiteList));
+                        installedPlugin.plugins.put(partKey, new InstalledPlugin.PluginPart(type, businessName, pluginFile, oDexDir, libDir, dependsOn, hostWhiteList, listType));
                     } else {
                         throw new RuntimeException("出现不认识的type==" + type);
                     }
