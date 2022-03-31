@@ -431,7 +431,8 @@ publishing {
     }
     repositories {
         maven {
-            name = "momo_shadow"
+            allowInsecureProtocol = true
+            name = "MomoShadow"
             credentials {
                 username = NEXUS_USERNAME
                 password = NEXUS_PASSWORD
